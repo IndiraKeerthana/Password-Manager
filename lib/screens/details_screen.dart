@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
+import 'add_password_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
-  final PasswordEntry entry;
+  final int index; // index into sampleEntries
 
-  const DetailsScreen({super.key, required this.entry});
+  const DetailsScreen({super.key, required this.index});
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -15,7 +16,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final entry = widget.entry;
+    final entry = sampleEntries[widget.index];
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(title: Text(entry.title), backgroundColor: Colors.indigo),
@@ -69,10 +70,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       backgroundColor: Colors.indigo,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit not implemented in this prototype')),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AddPasswordScreen(editIndex: widget.index)),
                       );
+                      setState(() {}); // refresh with updated entry
                     },
                     icon: const Icon(Icons.edit, color: Colors.white),
                     label: const Text('Edit', style: TextStyle(color: Colors.white)),
@@ -86,7 +89,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () {
-                      sampleEntries.remove(entry);
+                      sampleEntries.removeAt(widget.index);
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.delete, color: Colors.white),

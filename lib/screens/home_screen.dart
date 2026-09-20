@@ -79,12 +79,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: _filteredEntries.length,
                     itemBuilder: (context, index) {
                       final entry = _filteredEntries[index];
+                      final realIndex = sampleEntries.indexOf(entry);
                       return PasswordCard(
                         entry: entry,
                         onTap: () async {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => DetailsScreen(entry: entry)),
+                            MaterialPageRoute(builder: (_) => DetailsScreen(index: realIndex)),
                           );
                           setState(() {});
                         },

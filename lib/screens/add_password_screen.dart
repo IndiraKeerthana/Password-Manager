@@ -2,24 +2,50 @@ import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
 
 class AddPasswordScreen extends StatefulWidget {
-  const AddPasswordScreen({super.key});
+  final int? editIndex; // null = adding new, otherwise index into sampleEntries to update
+
+  const AddPasswordScreen({super.key, this.editIndex});
 
   @override
   State<AddPasswordScreen> createState() => _AddPasswordScreenState();
 }
 
 class _AddPasswordScreenState extends State<AddPasswordScreen> {
-  final _websiteController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _notesController = TextEditingController();
+  late final TextEditingController _websiteController;
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _notesController;
   bool _obscurePassword = true;
+
+  bool get _isEditing => widget.editIndex != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = _isEditing ? sampleEntries[widget.editIndex!] : null;
+    _websiteController = TextEditingController(text: existing?.website ?? '');
+    _usernameController = TextEditingController(text: existing?.username ?? '');
+    _passwordController = TextEditingController(text: existing?.password ?? '');
+    _notesController = TextEditingController(text: existing?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _websiteController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(title: const Text('Add Password'), backgroundColor: Colors.indigo),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Password' : 'Add Password'),
+        backgroundColor: Colors.indigo,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -61,17 +87,25 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                 ),
                 onPressed: () {
                   if (_websiteController.text.isNotEmpty && _usernameController.text.isNotEmpty) {
-                    sampleEntries.add(PasswordEntry(
+                    final updated = PasswordEntry(
                       title: _websiteController.text,
                       username: _usernameController.text,
                       password: _passwordController.text,
                       website: _websiteController.text,
                       notes: _notesController.text,
-                    ));
+                    );
+                    if (_isEditing) {
+                      sampleEntries[widget.editIndex!] = updated;
+                    } else {
+                      sampleEntries.add(updated);
+                    }
                   }
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 },
-                child: const Text('Save', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: Text(
+                  _isEditing ? 'Update' : 'Save',
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ),
           ],
