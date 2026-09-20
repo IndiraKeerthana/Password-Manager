@@ -42,11 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text('My Passwords'),
-        backgroundColor: Colors.indigo,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -64,12 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16),
               child: TextField(
                 onChanged: (value) => setState(() => _query = value),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Search',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  prefixIcon: Icon(Icons.search),
                 ),
               ),
             ),
@@ -80,20 +76,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? ListView(
                           children: [
                             const SizedBox(height: 120),
-                            Icon(Icons.lock_outline, size: 48, color: Colors.grey.shade400),
+                            Icon(Icons.lock_outline, size: 48, color: colorScheme.onSurfaceVariant),
                             const SizedBox(height: 12),
                             Center(
                               child: Text(
                                 _entries.isEmpty ? 'No passwords yet' : 'No matching entries',
-                                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16),
                               ),
                             ),
                             if (_entries.isEmpty) ...[
                               const SizedBox(height: 4),
-                              const Center(
+                              Center(
                                 child: Text(
                                   'Tap + to add your first password',
-                                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                                 ),
                               ),
                             ],
@@ -120,12 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.indigo,
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPasswordScreen()));
           _loadEntries();
         },
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add),
       ),
     );
   }

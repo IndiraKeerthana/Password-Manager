@@ -69,30 +69,28 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Password' : 'Add Password'),
-        backgroundColor: Colors.indigo,
-      ),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Password' : 'Add Password')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
               controller: _websiteController,
-              decoration: _inputDecoration('Website / App'),
+              decoration: const InputDecoration(labelText: 'Website / App'),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _usernameController,
-              decoration: _inputDecoration('Username / Email'),
+              decoration: const InputDecoration(labelText: 'Username / Email'),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
               obscureText: _obscurePassword,
-              decoration: _inputDecoration('Password').copyWith(
+              decoration: InputDecoration(
+                labelText: 'Password',
                 suffixIcon: IconButton(
                   icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -103,42 +101,25 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: _inputDecoration('Notes'),
+              decoration: const InputDecoration(labelText: 'Notes'),
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              height: 48,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
                 onPressed: _saving ? null : _save,
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary),
                       )
-                    : Text(
-                        _isEditing ? 'Update' : 'Save',
-                        style: const TextStyle(fontSize: 16, color: Colors.white),
-                      ),
+                    : Text(_isEditing ? 'Update' : 'Save'),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

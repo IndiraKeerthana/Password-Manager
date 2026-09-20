@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
+import '../utils/entry_colors.dart';
 
 class PasswordCard extends StatelessWidget {
   final PasswordEntry entry;
@@ -9,17 +10,16 @@ class PasswordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = colorForEntry(entry.title);
     return Card(
-      elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: Colors.indigo.shade50,
+          backgroundColor: color,
           child: Text(
             entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
-            style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
         title: Text(entry.title, style: const TextStyle(fontWeight: FontWeight.w600)),

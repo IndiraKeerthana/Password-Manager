@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
 import '../services/password_service.dart';
+import '../utils/entry_colors.dart';
 import 'add_password_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
@@ -19,16 +20,36 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final entry = widget.entry;
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = colorForEntry(entry.title);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(title: Text(entry.title), backgroundColor: Colors.indigo),
+      appBar: AppBar(title: Text(entry.title)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: accent,
+                  child: Text(
+                    entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
+                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    entry.title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -68,10 +89,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.indigo,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
                     onPressed: () async {
                       await Navigator.push(
                         context,
@@ -80,16 +97,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       // Data changed on the server; go back so Home reloads fresh data.
                       if (mounted) Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    label: const Text('Edit', style: TextStyle(color: Colors.white)),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Edit'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: colorScheme.error,
+                      foregroundColor: colorScheme.onError,
                     ),
                     onPressed: _deleting
                         ? null
@@ -98,8 +115,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             await PasswordService.delete(entry.id);
                             if (mounted) Navigator.pop(context);
                           },
-                    icon: const Icon(Icons.delete, color: Colors.white),
-                    label: const Text('Delete', style: TextStyle(color: Colors.white)),
+                    icon: const Icon(Icons.delete),
+                    label: const Text('Delete'),
                   ),
                 ),
               ],
@@ -111,16 +128,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
+    return Builder(builder: (context) {
+      final colorScheme = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+            const SizedBox(height: 2),
+            Text(value, style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
+    });
   }
 }
