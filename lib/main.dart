@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
-void main() {
+// TODO: replace with your own project's values (Supabase Dashboard -> Settings -> API)
+const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
   runApp(const PasswordManagerApp());
 }
 
@@ -10,6 +21,7 @@ class PasswordManagerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
     return MaterialApp(
       title: 'Password Manager',
       debugShowCheckedModeBanner: false,
@@ -18,7 +30,7 @@ class PasswordManagerApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: session != null ? const HomeScreen() : const LoginScreen(),
     );
   }
 }

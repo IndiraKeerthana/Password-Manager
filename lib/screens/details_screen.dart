@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
+import '../services/password_service.dart';
 import 'add_password_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
-  final int index; // index into sampleEntries
+  final PasswordEntry entry;
 
-  const DetailsScreen({super.key, required this.index});
+  const DetailsScreen({super.key, required this.entry});
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -13,10 +14,11 @@ class DetailsScreen extends StatefulWidget {
 
 class _DetailsScreenState extends State<DetailsScreen> {
   bool _obscurePassword = true;
+  bool _deleting = false;
 
   @override
   Widget build(BuildContext context) {
-    final entry = sampleEntries[widget.index];
+    final entry = widget.entry;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(title: Text(entry.title), backgroundColor: Colors.indigo),
@@ -73,9 +75,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     onPressed: () async {
                       await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => AddPasswordScreen(editIndex: widget.index)),
+                        MaterialPageRoute(builder: (_) => AddPasswordScreen(existingEntry: entry)),
                       );
-                      setState(() {}); // refresh with updated entry
+                      // Data changed on the server; go back so Home reloads fresh data.
+                      if (mounted) Navigator.pop(context);
                     },
                     icon: const Icon(Icons.edit, color: Colors.white),
                     label: const Text('Edit', style: TextStyle(color: Colors.white)),
@@ -88,10 +91,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       backgroundColor: Colors.redAccent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      sampleEntries.removeAt(widget.index);
-                      Navigator.pop(context);
-                    },
+                    onPressed: _deleting
+                        ? null
+                        : () async {
+                            setState(() => _deleting = true);
+                            await PasswordService.delete(entry.id);
+                            if (mounted) Navigator.pop(context);
+                          },
                     icon: const Icon(Icons.delete, color: Colors.white),
                     label: const Text('Delete', style: TextStyle(color: Colors.white)),
                   ),
