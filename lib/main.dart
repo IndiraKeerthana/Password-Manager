@@ -4,8 +4,8 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
 // TODO: replace with your own project's values (Supabase Dashboard -> Settings -> API)
-const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL';
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = 'https://zwrtfjmkwmohacrjwexe.supabase.co';
+const supabaseAnonKey = 'sb_publishable_hkJZ3xnM1bqduIxR6XImWQ_7_3OWnP2';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
