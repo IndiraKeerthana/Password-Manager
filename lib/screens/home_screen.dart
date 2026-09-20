@@ -55,18 +55,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Expanded(
             child: _filteredEntries.isEmpty
-                ? const Center(child: Text('No entries found', style: TextStyle(color: Colors.grey)))
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.lock_outline, size: 48, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        Text(
+                          sampleEntries.isEmpty ? 'No passwords yet' : 'No matching entries',
+                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
+                        if (sampleEntries.isEmpty) ...[
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Tap + to add your first password',
+                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: _filteredEntries.length,
                     itemBuilder: (context, index) {
                       final entry = _filteredEntries[index];
                       return PasswordCard(
                         entry: entry,
-                        onTap: () {
-                          Navigator.push(
+                        onTap: () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => DetailsScreen(entry: entry)),
                           );
+                          setState(() {});
                         },
                       );
                     },
@@ -76,8 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.indigo,
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPasswordScreen()));
+        onPressed: () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPasswordScreen()));
+          setState(() {});
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),

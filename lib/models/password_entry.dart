@@ -14,26 +14,5 @@ class PasswordEntry {
   });
 }
 
-List<PasswordEntry> sampleEntries = [
-  PasswordEntry(
-    title: 'Gmail',
-    username: 'nitya@gmail.com',
-    password: 'Str0ngP@ss1',
-    website: 'gmail.com',
-    notes: 'Personal email',
-  ),
-  PasswordEntry(
-    title: 'GitHub',
-    username: 'nitya-dev',
-    password: 'C0deSecure!22',
-    website: 'github.com',
-    notes: 'Work account',
-  ),
-  PasswordEntry(
-    title: 'Netflix',
-    username: 'nitya@gmail.com',
-    password: 'Watch1t@Night',
-    website: 'netflix.com',
-    notes: '',
-  ),
-];
+// Starts empty — entries are added dynamically from the Add Password screen.
+List<PasswordEntry> sampleEntries = [];
