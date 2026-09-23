@@ -37,9 +37,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
     final existing = widget.existingEntry;
 
     _websiteController = TextEditingController(
-      text: existing?.website ??
-          widget.initialWebsite ??
-          '',
+      text: existing?.website ?? widget.initialWebsite ?? '',
     );
 
     _usernameController = TextEditingController(
@@ -93,11 +91,10 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
     try {
       if (_isEditing) {
-        await PasswordService.update(
-          widget.existingEntry!.id,
-          entry,
-        );
+        // Update now accepts a single PasswordEntry.
+        await PasswordService.update(entry);
       } else {
+        // Add a new account.
         await PasswordService.add(entry);
       }
 
@@ -122,19 +119,17 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
           _isEditing ? 'Edit Account' : 'Add Account',
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Website / App
             TextField(
               controller: _websiteController,
               decoration: const InputDecoration(
@@ -145,6 +140,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
             const SizedBox(height: 16),
 
+            // Username / Email
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -155,6 +151,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
             const SizedBox(height: 16),
 
+            // Password
             TextField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -178,6 +175,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
             const SizedBox(height: 16),
 
+            // Notes
             TextField(
               controller: _notesController,
               maxLines: 3,
@@ -190,6 +188,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
             const SizedBox(height: 28),
 
+            // Save Button
             SizedBox(
               width: double.infinity,
               height: 50,

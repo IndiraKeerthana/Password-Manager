@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/auth_gate.dart';
 
 // TODO: replace with your own project's values (Supabase Dashboard -> Settings -> API)
 const supabaseUrl = 'https://zwrtfjmkwmohacrjwexe.supabase.co';
@@ -30,7 +29,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: supabaseUrl,
-    anonKey: supabaseAnonKey,
+    publishableKey: supabaseAnonKey,
   );
   await loadSavedThemeMode();
   runApp(const PasswordManagerApp());
@@ -83,7 +82,6 @@ class PasswordManagerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = Supabase.instance.client.auth.currentSession;
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
@@ -93,7 +91,7 @@ class PasswordManagerApp extends StatelessWidget {
           themeMode: mode,
           theme: _buildTheme(Brightness.light),
           darkTheme: _buildTheme(Brightness.dark),
-          home: session != null ? const HomeScreen() : const LoginScreen(),
+          home: const AuthGate(),
         );
       },
     );

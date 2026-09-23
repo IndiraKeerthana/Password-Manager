@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/password_entry.dart';
 import '../services/password_service.dart';
 import '../utils/entry_colors.dart';
@@ -15,13 +16,63 @@ class DetailsScreen extends StatefulWidget {
 
 class _DetailsScreenState extends State<DetailsScreen> {
   bool _obscurePassword = true;
-  bool _deleting = false;
+  bool _working = false;
+
+  Future<void> _editEntry() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddPasswordScreen(existingEntry: widget.entry),
+      ),
+    );
+
+    if (!mounted) return;
+    // Only close details when the edit screen actually saved.
+    if (result == true) Navigator.pop(context, true);
+  }
+
+  Future<void> _deleteEntry() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete password?'),
+        content: Text('Delete the saved account for ${widget.entry.username}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+    setState(() => _working = true);
+
+    try {
+      await PasswordService.delete(widget.entry.id);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _working = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete password: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final entry = widget.entry;
     final colorScheme = Theme.of(context).colorScheme;
     final accent = colorForEntry(entry.title);
+
     return Scaffold(
       appBar: AppBar(title: Text(entry.title)),
       body: Padding(
@@ -36,14 +87,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   backgroundColor: accent,
                   child: Text(
                     entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     entry.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -58,17 +116,24 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     _detailRow('Username', entry.username),
                     const Divider(),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: _detailRow(
                             'Password',
-                            _obscurePassword ? '•' * entry.password.length : entry.password,
+                            _obscurePassword
+                                ? '•' * entry.password.length
+                                : entry.password,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                         ),
                       ],
                     ),
@@ -89,14 +154,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => AddPasswordScreen(existingEntry: entry)),
-                      );
-                      // Data changed on the server; go back so Home reloads fresh data.
-                      if (mounted) Navigator.pop(context);
-                    },
+                    onPressed: _working ? null : _editEntry,
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit'),
                   ),
@@ -108,15 +166,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       backgroundColor: colorScheme.error,
                       foregroundColor: colorScheme.onError,
                     ),
-                    onPressed: _deleting
-                        ? null
-                        : () async {
-                            setState(() => _deleting = true);
-                            await PasswordService.delete(entry.id);
-                            if (mounted) Navigator.pop(context);
-                          },
+                    onPressed: _working ? null : _deleteEntry,
                     icon: const Icon(Icons.delete),
-                    label: const Text('Delete'),
+                    label: Text(_working ? 'Deleting...' : 'Delete'),
                   ),
                 ),
               ],
@@ -128,19 +180,23 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _detailRow(String label, String value) {
-    return Builder(builder: (context) {
-      final colorScheme = Theme.of(context).colorScheme;
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
-            const SizedBox(height: 2),
-            Text(value, style: const TextStyle(fontSize: 16)),
-          ],
-        ),
-      );
-    });
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 2),
+          SelectableText(value, style: const TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
   }
 }

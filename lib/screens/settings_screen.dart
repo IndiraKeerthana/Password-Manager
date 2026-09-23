@@ -24,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text('Change Master Password'),
+              title: const Text('Change Login Password'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -73,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             if (dialogContext.mounted) Navigator.pop(dialogContext);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Master password updated')),
+                                const SnackBar(content: Text('Login password updated')),
                               );
                             }
                           } on AuthException catch (e) {
@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.lock_reset),
-            title: const Text('Change Master Password'),
+            title: const Text('Change Login Password'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _openChangePasswordDialog,
           ),
