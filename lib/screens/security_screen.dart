@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/encryption_service.dart';
 import 'login_screen.dart';
 
 class SecurityScreen extends StatefulWidget {
@@ -55,13 +56,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 ? null
                 : () async {
                     setState(() => _signingOutEverywhere = true);
+                    final navigator = Navigator.of(context);
+                    await EncryptionService.lockVault();
                     await Supabase.instance.client.auth.signOut(scope: SignOutScope.global);
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    }
+                    if (!mounted) return;
+                    navigator.pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
                   },
             icon: const Icon(Icons.logout),
             label: Text(_signingOutEverywhere ? 'Signing out...' : 'Sign out of all devices'),

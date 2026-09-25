@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'home_screen.dart';
 import 'auth_gate.dart';
-import '../services/encryption_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,54 +35,54 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       if (_isSignUp) {
+        // Create a new Supabase account.
         final response = await client.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
-        // Some Supabase projects sign in immediately after sign-up; others
-        // require email confirmation first.
+        // If Supabase immediately creates a session,
+        // continue to the authentication gate.
         if (response.session != null && response.user != null) {
-          await EncryptionService.initializeKey();
           if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => const AuthGate(),
+            ),
           );
         } else {
+          // Email confirmation may be required.
           if (!mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Account created. Check your email to confirm your account, '
-                'then log in.',
+                'Account created. Check your email to confirm '
+                'your account, then log in.',
               ),
             ),
           );
+
           setState(() => _isSignUp = false);
         }
       } else {
-        // Sign in using Supabase Auth.
+        // Sign in using Supabase authentication.
         final response = await client.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
-        // Confirm that authentication succeeded.
         if (response.user == null) {
           throw Exception('Login failed. Please try again.');
         }
 
-        // Initialize or retrieve the user's local encryption key.
-        await EncryptionService.initializeKey();
-
         if (!mounted) return;
 
-        // Navigate to the Home Screen.
-        Navigator.pushReplacement(
-          context,
+        // Continue to AuthGate to unlock the vault.
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
+            builder: (_) => const AuthGate(),
           ),
         );
       }
@@ -99,21 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      // Authentication may have succeeded even if vault initialization failed.
-      // Send the signed-in user to AuthGate, which displays a recoverable error
-      // instead of leaving them on a misleading login screen.
-      if (client.auth.currentSession != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AuthGate()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Something went wrong: $e'),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Something went wrong: $e'),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -140,6 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // App Icon
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: colorScheme.primary,
@@ -152,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
+                // App Name
                 Text(
                   'Password Manager',
                   style: Theme.of(context)
@@ -164,6 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 8),
 
+                // Subtitle
                 Text(
                   _isSignUp
                       ? 'Create an account to continue'
@@ -189,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 16),
 
-                // Password Field
+                // Supabase Account Password Field
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,

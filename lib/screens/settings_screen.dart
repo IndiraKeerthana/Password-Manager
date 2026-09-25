@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
+import '../services/encryption_service.dart';
 import 'login_screen.dart';
 import 'security_screen.dart';
 
@@ -70,16 +71,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             await Supabase.instance.client.auth.updateUser(
                               UserAttributes(password: newPasswordController.text),
                             );
+                            await EncryptionService.rewrapDekWithNewPassword(
+                              newPasswordController.text,
+                            );
                             if (dialogContext.mounted) Navigator.pop(dialogContext);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Login password updated')),
-                              );
-                            }
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Login password updated')),
+                            );
                           } on AuthException catch (e) {
                             setDialogState(() {
                               submitting = false;
                               error = e.message;
+                            });
+                          } catch (e) {
+                            setDialogState(() {
+                              submitting = false;
+                              error = 'Failed to re-encrypt vault key: $e';
                             });
                           }
                         },
@@ -147,13 +155,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
             onTap: () async {
+              final navigator = Navigator.of(context);
+              await EncryptionService.lockVault();
               await Supabase.instance.client.auth.signOut();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
+              if (!mounted) return;
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
             },
           ),
         ],

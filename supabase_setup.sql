@@ -40,3 +40,32 @@ drop policy if exists "Users can delete their own passwords" on public.passwords
 create policy "Users can delete their own passwords"
   on public.passwords for delete
   using (auth.uid() = user_id);
+
+-- Master Password / Single Password Vault Settings Table (for Cross-Device Sync)
+create table if not exists public.vault_settings (
+  user_id uuid primary key default auth.uid()
+    references auth.users (id) on delete cascade,
+  salt text not null,
+  wrapped_dek text not null default '',
+  verifier text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.vault_settings enable row level security;
+
+drop policy if exists "Users can view their own vault settings" on public.vault_settings;
+create policy "Users can view their own vault settings"
+  on public.vault_settings for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own vault settings" on public.vault_settings;
+create policy "Users can insert their own vault settings"
+  on public.vault_settings for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own vault settings" on public.vault_settings;
+create policy "Users can update their own vault settings"
+  on public.vault_settings for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+

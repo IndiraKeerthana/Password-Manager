@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/auth_gate.dart';
+import 'services/encryption_service.dart';
 
 // TODO: replace with your own project's values (Supabase Dashboard -> Settings -> API)
 const supabaseUrl = 'https://zwrtfjmkwmohacrjwexe.supabase.co';
@@ -77,8 +78,36 @@ ThemeData _buildTheme(Brightness brightness) {
   );
 }
 
-class PasswordManagerApp extends StatelessWidget {
+class PasswordManagerApp extends StatefulWidget {
   const PasswordManagerApp({super.key});
+
+  @override
+  State<PasswordManagerApp> createState() => _PasswordManagerAppState();
+}
+
+class _PasswordManagerAppState extends State<PasswordManagerApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      // Lock vault in memory when app is backgrounded or screen locked
+      EncryptionService.lockMemoryVault();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
