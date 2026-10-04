@@ -78,6 +78,9 @@ ThemeData _buildTheme(Brightness brightness) {
   );
 }
 
+/// Global navigator key to manage root navigation cleanly across lifecycle events.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class PasswordManagerApp extends StatefulWidget {
   const PasswordManagerApp({super.key});
 
@@ -106,6 +109,7 @@ class _PasswordManagerAppState extends State<PasswordManagerApp>
         state == AppLifecycleState.hidden) {
       // Lock vault in memory when app is backgrounded or screen locked
       EncryptionService.lockMemoryVault();
+      navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
   }
 
@@ -115,6 +119,7 @@ class _PasswordManagerAppState extends State<PasswordManagerApp>
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'Password Manager',
           debugShowCheckedModeBanner: false,
           themeMode: mode,

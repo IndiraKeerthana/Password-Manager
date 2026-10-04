@@ -25,6 +25,9 @@ class PasswordService {
 
     final entries = <PasswordEntry>[];
     for (final item in response) {
+      if (!EncryptionService.isVaultUnlocked) {
+        return entries;
+      }
       final row = Map<String, dynamic>.from(item as Map);
       final storedPassword = row['password'] as String? ?? '';
 

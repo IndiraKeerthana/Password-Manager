@@ -26,8 +26,14 @@ class EncryptionService {
   static final ValueNotifier<bool> vaultUnlockedNotifier =
       ValueNotifier<bool>(false);
 
+  static String? get currentUserId => _currentUserId;
+
   static bool get isVaultUnlocked =>
       _dek != null && _currentUserId == _client.auth.currentUser?.id;
+
+  /// Unlocks or initializes the vault with the vault password.
+  static Future<void> unlockVault(String vaultPassword) =>
+      initializeFromLoginPassword(vaultPassword);
 
   static SupabaseClient get _client =>
       Supabase.instance.client;
@@ -295,11 +301,6 @@ class EncryptionService {
       }
     }
 
-    // Set active vault state after successful initialization.
-    _currentUserId = userId;
-    _dek = dek;
-    vaultUnlockedNotifier.value = true;
-
     // Cache DEK in secure storage across all platforms.
     final dekBytes = await dek.extractBytes();
 
@@ -307,6 +308,11 @@ class EncryptionService {
       key: _getStorageKey(userId),
       value: base64Encode(dekBytes),
     );
+
+    // Set active vault state after successful initialization and storage caching.
+    _currentUserId = userId;
+    _dek = dek;
+    vaultUnlockedNotifier.value = true;
   }
 
   /// Restores the cached DEK only if it matches the
@@ -421,6 +427,131 @@ class EncryptionService {
         .eq('user_id', userId);
   }
 
+  /// Changes the vault master key safely using the existing architecture.
+  ///
+  /// Validates [currentMasterKey] against the existing vault verifier before
+  /// making any changes. Re-wraps the active DEK using a new KEK derived from
+  /// [newMasterKey] and a freshly generated salt, and updates `vault_settings`.
+  ///
+  /// Keeps the active DEK in memory and storage so existing saved passwords
+  /// remain immediately readable without re-encrypting records.
+  static Future<void> changeMasterKey({
+    required String currentMasterKey,
+    required String newMasterKey,
+  }) async {
+    final userId = _userId;
+    final activeDek = _dek;
+
+    if (activeDek == null || _currentUserId != userId) {
+      throw StateError(
+        'Vault must be unlocked to change the master key.',
+      );
+    }
+
+    final settings = await _client
+        .from('vault_settings')
+        .select('salt, wrapped_dek, verifier')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (settings == null) {
+      throw StateError('No vault settings found.');
+    }
+
+    final saltValue = settings['salt'] as String?;
+    if (saltValue == null || saltValue.isEmpty) {
+      throw StateError('Vault salt is missing.');
+    }
+
+    final currentSalt = base64Decode(saltValue);
+    final currentKek = await _deriveKek(
+      currentMasterKey,
+      currentSalt,
+    );
+
+    final storedWrappedDek =
+        settings['wrapped_dek'] as String? ?? '';
+
+    SecretKey candidateDek;
+    if (storedWrappedDek.isEmpty) {
+      candidateDek = currentKek;
+    } else {
+      try {
+        candidateDek = await _unwrapDek(
+          storedWrappedDek,
+          currentKek,
+        );
+      } catch (_) {
+        throw StateError('Current master key is incorrect.');
+      }
+    }
+
+    final verifier = settings['verifier'] as String?;
+    if (verifier == null || verifier.isEmpty) {
+      throw StateError('Vault verifier is missing.');
+    }
+
+    try {
+      await _verifyDek(verifier, candidateDek);
+    } catch (_) {
+      throw StateError('Current master key is incorrect.');
+    }
+
+    final activeBytes = await activeDek.extractBytes();
+    final candidateBytes = await candidateDek.extractBytes();
+    if (!listEquals(activeBytes, candidateBytes)) {
+      throw StateError('Current master key is incorrect.');
+    }
+
+    // Validation succeeded. Derive new KEK with new salt and re-wrap DEK.
+    final newSalt = _generateRandomBytes(16);
+    final newKek = await _deriveKek(
+      newMasterKey,
+      newSalt,
+    );
+
+    final newWrappedDek = await _wrapDek(
+      activeDek,
+      newKek,
+    );
+
+    final newSaltBytes = base64Encode(newSalt);
+
+    final updateResult = await _client
+        .from('vault_settings')
+        .update({
+          'salt': newSaltBytes,
+          'wrapped_dek': newWrappedDek,
+        })
+        .eq('user_id', userId)
+        .select('salt, wrapped_dek');
+
+    if (updateResult.isEmpty) {
+      throw StateError(
+        'Failed to persist new vault settings to the database. No rows were updated.',
+      );
+    }
+
+    final persisted = updateResult.first;
+
+    if (persisted['salt'] != newSaltBytes ||
+        persisted['wrapped_dek'] != newWrappedDek) {
+      throw StateError(
+        'Database persistence verification failed: persisted values do not match new master key settings.',
+      );
+    }
+
+    // Keep vault unlocked in memory and ensure cached key in secure storage
+    await _storage.write(
+      key: _getStorageKey(userId),
+      value: base64Encode(activeBytes),
+    );
+
+    _currentUserId = userId;
+    _dek = activeDek;
+    vaultUnlockedNotifier.value = true;
+  }
+
   /// Locks the vault in memory without deleting the stored DEK.
   static void lockMemoryVault() {
     _dek = null;
@@ -497,6 +628,8 @@ class EncryptionService {
   static Future<String> decryptPassword(
     String encryptedPassword,
   ) async {
+    final key = _getKey();
+
     try {
       Map<String, dynamic> payload;
 
@@ -531,7 +664,7 @@ class EncryptionService {
 
       final clearText = await _aes.decrypt(
         box,
-        secretKey: _getKey(),
+        secretKey: key,
       );
 
       return utf8.decode(clearText);

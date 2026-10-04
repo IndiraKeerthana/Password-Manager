@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/password_entry.dart';
+import '../services/encryption_service.dart';
 import '../services/password_service.dart';
 import '../utils/entry_colors.dart';
 
@@ -29,6 +30,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadEntries() async {
+    if (!EncryptionService.isVaultUnlocked) {
+      if (mounted) {
+        setState(() {
+          _entries = [];
+          _loading = false;
+        });
+      }
+      return;
+    }
+
     if (mounted) {
       setState(() => _loading = true);
     }
@@ -36,14 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final entries = await PasswordService.fetchAll();
 
-      if (!mounted) return;
+      if (!mounted || !EncryptionService.isVaultUnlocked) return;
 
       setState(() {
         _entries = entries;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || !EncryptionService.isVaultUnlocked) return;
 
       setState(() => _loading = false);
 
@@ -172,7 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    _loadEntries();
+    if (mounted && EncryptionService.isVaultUnlocked) {
+      _loadEntries();
+    }
   }
 
   Future<void> _addPassword() async {
@@ -183,7 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    _loadEntries();
+    if (mounted && EncryptionService.isVaultUnlocked) {
+      _loadEntries();
+    }
   }
 
   @override

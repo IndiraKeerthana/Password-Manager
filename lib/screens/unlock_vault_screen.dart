@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../main.dart';
 import '../services/encryption_service.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
 
 class UnlockVaultScreen extends StatefulWidget {
   const UnlockVaultScreen({super.key});
@@ -39,12 +38,11 @@ class _UnlockVaultScreenState extends State<UnlockVaultScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-      );
+      // Setting vaultUnlockedNotifier in initializeFromLoginPassword
+      // causes AuthGate to automatically display HomeScreen.
+      navigatorKey.currentState?.popUntil((route) => route.isFirst);
     } catch (e) {
+      debugPrint('Unlock error: $e');
       if (!mounted) return;
 
       setState(() {
@@ -55,14 +53,10 @@ class _UnlockVaultScreenState extends State<UnlockVaultScreen> {
   }
 
   Future<void> _signOut() async {
-    final navigator = Navigator.of(context);
     await EncryptionService.lockVault();
     await Supabase.instance.client.auth.signOut();
     if (!mounted) return;
-    navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
   @override

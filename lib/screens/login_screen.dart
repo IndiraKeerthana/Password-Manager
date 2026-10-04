@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'auth_gate.dart';
+import '../main.dart';
+import '../services/encryption_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Ensure memory vault is locked before starting authentication.
+    EncryptionService.lockMemoryVault();
     setState(() => _loading = true);
 
     final client = Supabase.instance.client;
@@ -42,15 +45,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         // If Supabase immediately creates a session,
-        // continue to the authentication gate.
+        // ensure any pushed routes are popped. AuthGate will show UnlockVaultScreen.
         if (response.session != null && response.user != null) {
           if (!mounted) return;
-
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => const AuthGate(),
-            ),
-          );
+          navigatorKey.currentState?.popUntil((route) => route.isFirst);
         } else {
           // Email confirmation may be required.
           if (!mounted) return;
@@ -79,12 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
-        // Continue to AuthGate to unlock the vault.
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const AuthGate(),
-          ),
-        );
+        navigatorKey.currentState?.popUntil((route) => route.isFirst);
       }
     } on AuthException catch (e) {
       if (!mounted) return;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../services/encryption_service.dart';
-import 'login_screen.dart';
+import '../widgets/change_master_key_dialog.dart';
 import 'security_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -119,6 +119,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: _openChangePasswordDialog,
           ),
+          ListTile(
+            leading: const Icon(Icons.key),
+            title: const Text('Change Master Key'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => const ChangeMasterKeyDialog(),
+              );
+            },
+          ),
           ValueListenableBuilder<ThemeMode>(
             valueListenable: themeModeNotifier,
             builder: (context, mode, _) {
@@ -155,14 +166,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
             onTap: () async {
-              final navigator = Navigator.of(context);
               await EncryptionService.lockVault();
               await Supabase.instance.client.auth.signOut();
               if (!mounted) return;
-              navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
+              navigatorKey.currentState?.popUntil((route) => route.isFirst);
             },
           ),
         ],

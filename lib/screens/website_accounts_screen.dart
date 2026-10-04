@@ -153,6 +153,13 @@ class _WebsiteAccountsScreenState
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           widget.websiteName,
           style: const TextStyle(

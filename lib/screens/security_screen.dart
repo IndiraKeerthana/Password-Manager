@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../main.dart';
 import '../services/encryption_service.dart';
-import 'login_screen.dart';
+import '../widgets/change_master_key_dialog.dart';
 
 class SecurityScreen extends StatefulWidget {
   const SecurityScreen({super.key});
@@ -46,6 +47,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
             'security, so only you can read or edit them.',
             style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.key),
+              title: const Text('Change Master Key'),
+              subtitle: const Text('Update the master key used to unlock your vault'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const ChangeMasterKeyDialog(),
+                );
+              },
+            ),
+          ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -56,14 +72,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 ? null
                 : () async {
                     setState(() => _signingOutEverywhere = true);
-                    final navigator = Navigator.of(context);
                     await EncryptionService.lockVault();
                     await Supabase.instance.client.auth.signOut(scope: SignOutScope.global);
                     if (!mounted) return;
-                    navigator.pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    );
+                    navigatorKey.currentState?.popUntil((route) => route.isFirst);
                   },
             icon: const Icon(Icons.logout),
             label: Text(_signingOutEverywhere ? 'Signing out...' : 'Sign out of all devices'),
