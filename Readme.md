@@ -658,11 +658,11 @@ supabase_envelope_migration.sql
 
 **Responsive design -- mobile, tablet and laptop views**
 
-`<img width="1080" alt="Password Manager responsive screens" src="https://github.com/user-attachments/assets/3d64ff90-142e-4be9-a437-127c250fc8c2" />`{=html}
+
 
 **App flow -- login, vault and add-account form**
 
-`<img width="750" alt="Password Manager app flow" src="https://github.com/user-attachments/assets/46b917e3-e531-4b87-86a4-6b3bdf68bcfa" />`{=html}
+<img width="750" alt="Password Manager app flow" src="https://github.com/user-attachments/assets/46b917e3-e531-4b87-86a4-6b3bdf68bcfa" />
 
 ## Security
 
