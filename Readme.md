@@ -658,7 +658,7 @@ supabase_envelope_migration.sql
 
 **Responsive design -- mobile, tablet and laptop views**
 
-
+<img width="1080" alt="Password Manager responsive screens" src="https://github.com/user-attachments/assets/3d64ff90-142e-4be9-a437-127c250fc8c2" />
 
 **App flow -- login, vault and add-account form**
 
